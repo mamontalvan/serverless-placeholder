@@ -1,6 +1,6 @@
 # serverless-placeholder
 
-#Install
+#Install: 
 npm install
 
 #Deploy local:
