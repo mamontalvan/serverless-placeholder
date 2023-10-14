@@ -1,0 +1,87 @@
+service: serverless-placeholder
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource: 
+      - "Fn::GetAtt": [RolTable, Arn]
+      - "Fn::GetAtt": [UserTable, Arn] 
+  environment:
+    PLACE_HOLDER_URL: https://jsonplaceholder.typicode.com
+    USER_TABLE_NAME: Users
+    ROL_TABLE_NAME: Roles
+
+resources:
+  Resources:
+    RolTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S            
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TableName: ${self:provider.environment.ROL_TABLE_NAME}
+    UserTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S            
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TableName: ${self:provider.environment.USER_TABLE_NAME}        
+
+functions:
+  getUsers:
+    handler: src/functions/get-users/handler.handler
+    events:
+      - http:
+          path: me
+          method: get
+
+  createUser:
+    handler: src/functions/create-user/handler.handler
+    events:
+      - http:
+          path: users
+          method: post
+
+  createRol:
+    handler: src/functions/create-rol/handler.handler
+    events:
+      - http:
+          path: roles
+          method: post
+
+custom:
+  esbuild:
+    bundle: true
+    minify: true
+
+plugins:
+  - serverless-offline
+  - serverless-esbuild
+
